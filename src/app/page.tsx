@@ -186,7 +186,6 @@ const CardComponent = ({ card, onCardClick, isSelected, isDeckBuilderMode }: { c
                 </div>
                 <h3 className="text-center text-sm md:text-base font-semibold mt-2 truncate">{name}</h3>
             </div>
-            {/* --- NAYA UPDATE: Stats ko game jaisa dikhane ke liye --- */}
             <div className="text-xs text-center mt-2 px-1 space-y-1 text-gray-300">
                 {hitpoints && <StatRow icon="❤️" label="Health" value={hitpoints} />}
                 {damage && <StatRow icon="⚔️" label="Damage" value={damage} />}
@@ -196,7 +195,6 @@ const CardComponent = ({ card, onCardClick, isSelected, isDeckBuilderMode }: { c
     );
 };
 
-// Naya component jo har stat ko ek saaf row mein dikhata hai.
 const StatRow = ({ icon, label, value }: { icon: string; label: string; value: number }) => (
     <div className="flex justify-between items-center text-left">
         <span className="flex items-center gap-1">
