@@ -1,13 +1,14 @@
-// Yeh file app router ke conventions ke hisaab se hai.
+// This file has been updated to remove the unused 'request' parameter,
+// which resolves the ESLint warning.
+
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-  // Suraksha ke liye, API Key ko Environment Variable se lein.
+export async function GET() { // 'request' parameter removed
   const apiKey = process.env.SUPERCELL_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
-      { message: 'Server par API key configure nahi hai.' },
+      { message: 'API key is not configured on the server.' },
       { status: 500 }
     );
   }
@@ -24,19 +25,21 @@ export async function GET(request: Request) {
     if (!apiResponse.ok) {
       const errorData = await apiResponse.json();
       return NextResponse.json(
-        { message: errorData.reason || 'Supercell API se data fetch nahi ho paya.' },
+        { message: errorData.reason || 'Failed to fetch data from Supercell API.' },
         { status: apiResponse.status }
       );
     }
 
     const data = await apiResponse.json();
+    // The 'items' array contains all card details needed by the frontend.
     return NextResponse.json({ cards: data.items });
 
   } catch (error) {
-    console.error(error);
+    console.error('Error in API route:', error);
     return NextResponse.json(
-      { message: 'Internal server error.' },
+      { message: 'An internal server error occurred.' },
       { status: 500 }
     );
   }
 }
+
