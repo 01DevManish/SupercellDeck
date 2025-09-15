@@ -63,27 +63,45 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- ZAROORI: Apna Supercell API Key yahan daalein ---
+            // WARNING: Yeh key public ho jayegi. Isey surakshit rakhein.
+            const apiKey = 'AAPKA_SUPERCELL_API_KEY_YAHAN_DAALEIN';
+
             const loaderContainer = document.getElementById('loader-container');
             const errorContainer = document.getElementById('error-container');
             const errorMessage = document.getElementById('error-message');
             const cardsGrid = document.getElementById('cards-grid');
 
+            if (apiKey === 'AAPKA_SUPERCELL_API_KEY_YAHAN_DAALEIN') {
+                 loaderContainer.classList.add('hidden');
+                 errorMessage.textContent = 'Kripya script mein apna Supercell API key daalein.';
+                 errorContainer.classList.remove('hidden');
+                 return;
+            }
+
             // --- Function to create a single card's HTML ---
             function createCardHTML(card) {
+                // API se 'elixirCost' aata hai, hum use 'elixir' ke roop mein istemal karenge.
+                const elixir = card.elixirCost; 
+                const iconUrl = card.iconUrls?.medium; // medium icon URL ka istemal karein
+
+                if (!iconUrl) return ''; // Agar icon nahi hai to skip karein
+
                 const rarityClasses = {
                     'Common': 'border-gray-400 bg-gray-800/70',
                     'Rare': 'border-yellow-500 bg-yellow-900/40',
                     'Epic': 'border-purple-500 bg-purple-900/40',
                     'Legendary': 'border-sky-400 bg-sky-900/40',
+                    'Champion': 'border-orange-400 bg-orange-900/40'
                 };
                 const rarityClass = rarityClasses[card.rarity] || 'border-gray-600';
 
                 return `
                     <div class="p-2 border-4 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl ${rarityClass}">
                         <div class="relative">
-                            <img src="${card.icon}" alt="${card.name}" class="w-full h-auto rounded-md" />
+                            <img src="${iconUrl}" alt="${card.name}" class="w-full h-auto rounded-md" />
                             <div class="absolute -top-3 -left-3 bg-purple-600 text-white text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full border-2 border-purple-800 shadow-lg">
-                                ${card.elixir}
+                                ${elixir}
                             </div>
                         </div>
                         <h3 class="text-center text-sm md:text-base font-semibold mt-2 truncate">${card.name}</h3>
@@ -93,36 +111,40 @@
 
             // --- Main function to fetch and render cards ---
             async function fetchAndRenderCards() {
+                // Browser se direct API call karne par CORS error aa sakta hai,
+                // isliye hum ek public proxy ka istemal kar rahe hain.
+                const apiUrl = 'https://proxy.royaleapi.dev/v1/cards';
+
                 try {
-                    // This fetch will only work if this HTML file is served from the same
-                    // domain as your Next.js app (e.g., in the public folder).
-                    const response = await fetch('/api/cards');
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`
+                        }
+                    });
                     
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(errorData.message || 'Cards ko fetch karne mein asamarth.');
+                        throw new Error(errorData.reason || 'Invalid API Key or server error.');
                     }
                     
                     const data = await response.json();
 
-                    // Hide loader and show grid
                     loaderContainer.classList.add('hidden');
                     cardsGrid.classList.remove('hidden');
-
-                    // Generate HTML for all cards and insert into the grid
-                    cardsGrid.innerHTML = data.cards.map(createCardHTML).join('');
+                    
+                    // Supercell API 'items' array return karta hai.
+                    cardsGrid.innerHTML = data.items.map(createCardHTML).join('');
 
                 } catch (err) {
-                    // Hide loader and show error
                     loaderContainer.classList.add('hidden');
                     errorMessage.textContent = err.message;
                     errorContainer.classList.remove('hidden');
                 }
             }
 
-            // Run the main function
             fetchAndRenderCards();
         });
     </script>
 </body>
 </html>
+
