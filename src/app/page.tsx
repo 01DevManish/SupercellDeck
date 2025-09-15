@@ -17,6 +17,8 @@ interface Card {
   damagePerSecond?: number;
 }
 
+// DeckBuilderToggle component ke props ke liye ek type banaya gaya hai.
+// Yahi 'Unexpected any' error ko theek karta hai.
 interface DeckBuilderToggleProps {
   deckBuilderMode: boolean;
   setDeckBuilderMode: (mode: boolean) => void;
