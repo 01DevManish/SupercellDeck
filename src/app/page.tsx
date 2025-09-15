@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-// Card data ke liye ek saaf TypeScript interface banaya gaya hai.
+// Card data ke liye interface ko update kiya gaya hai taaki aur stats aa sakein.
 interface Card {
   id: number;
   name: string;
@@ -11,12 +11,12 @@ interface Card {
     medium: string;
   };
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Champion';
+  // Stats ko optional rakha gaya hai kyunki spells mein yeh nahi hote.
   hitpoints?: number;
   damage?: number;
+  damagePerSecond?: number;
 }
 
-// DeckBuilderToggle component ke props ke liye ek type banaya gaya hai.
-// Yahi 'Unexpected any' error ko theek karta hai.
 interface DeckBuilderToggleProps {
   deckBuilderMode: boolean;
   setDeckBuilderMode: (mode: boolean) => void;
@@ -162,7 +162,7 @@ const RecommendedDeckDisplay = ({ deck }: { deck: Card[] }) => (
 );
 
 const CardComponent = ({ card, onCardClick, isSelected, isDeckBuilderMode }: { card: Card; onCardClick: () => void; isSelected: boolean; isDeckBuilderMode: boolean; }) => {
-    const { elixirCost, iconUrls, name, rarity, hitpoints, damage } = card;
+    const { elixirCost, iconUrls, name, rarity, hitpoints, damage, damagePerSecond } = card;
     if (!iconUrls?.medium) return null;
     const rarityClasses: {[key: string]: string} = {
         'Common': 'border-gray-400 bg-gray-800/70', 'Rare': 'border-yellow-500 bg-yellow-900/40',
@@ -184,13 +184,26 @@ const CardComponent = ({ card, onCardClick, isSelected, isDeckBuilderMode }: { c
                 </div>
                 <h3 className="text-center text-sm md:text-base font-semibold mt-2 truncate">{name}</h3>
             </div>
-            <div className="text-xs text-center mt-2 space-y-1 text-gray-300">
-                {hitpoints && <p className="flex items-center justify-center gap-1">❤️ <span className="font-bold text-white">{hitpoints}</span></p>}
-                {damage && <p className="flex items-center justify-center gap-1">⚔️ <span className="font-bold text-white">{damage}</span></p>}
+            {/* --- NAYA UPDATE: Stats ko game jaisa dikhane ke liye --- */}
+            <div className="text-xs text-center mt-2 px-1 space-y-1 text-gray-300">
+                {hitpoints && <StatRow icon="❤️" label="Health" value={hitpoints} />}
+                {damage && <StatRow icon="⚔️" label="Damage" value={damage} />}
+                {damagePerSecond && <StatRow icon="⏱️" label="DPS" value={damagePerSecond} />}
             </div>
         </div>
     );
 };
+
+// Naya component jo har stat ko ek saaf row mein dikhata hai.
+const StatRow = ({ icon, label, value }: { icon: string; label: string; value: number }) => (
+    <div className="flex justify-between items-center text-left">
+        <span className="flex items-center gap-1">
+            <span>{icon}</span>
+            <span className="text-gray-400">{label}</span>
+        </span>
+        <span className="font-bold text-white">{value}</span>
+    </div>
+);
 
 const ElixirDrop = ({ cost }: { cost: number }) => (
   <div className="relative w-10 h-10">
