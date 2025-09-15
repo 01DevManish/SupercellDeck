@@ -1,8 +1,8 @@
-'use client'; // Client-side hooks (useState, useEffect) ke liye zaroori hai.
+'use client';
 
 import { useState, useEffect } from 'react';
 
-// Card data ke structure ko define karne ke liye ek behtar TypeScript interface.
+// Card data ke liye ek saaf TypeScript interface banaya gaya hai.
 interface Card {
   id: number;
   name: string;
@@ -15,7 +15,15 @@ interface Card {
   damage?: number;
 }
 
-// Kuch cards ke liye YouTube video IDs ka ek simple map.
+// DeckBuilderToggle component ke props ke liye ek type banaya gaya hai.
+// Yahi 'Unexpected any' error ko theek karta hai.
+interface DeckBuilderToggleProps {
+  deckBuilderMode: boolean;
+  setDeckBuilderMode: (mode: boolean) => void;
+  onFindDeck: () => void;
+  selectionCount: number;
+}
+
 const videoMap: { [key: string]: string } = {
   'P.E.K.K.A.': 'F66-i5Ohp-w', 'Hog Rider': '_3_212b_4hA', 'Wizard': 'Xt_N4m7gJ78',
   'Golem': 'p_dYV5v-sGI', 'Goblin Barrel': 'fsZ2-pH48yY', 'Knight': 'i-3-n-p-mBE',
@@ -26,8 +34,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCardForVideo, setSelectedCardForVideo] = useState<Card | null>(null);
-
-  // Deck Builder ke liye naye states
   const [deckBuilderMode, setDeckBuilderMode] = useState<boolean>(false);
   const [selectedCollection, setSelectedCollection] = useState<Set<number>>(new Set());
   const [recommendedDeck, setRecommendedDeck] = useState<Card[]>([]);
@@ -55,19 +61,12 @@ export default function HomePage() {
   const handleCardSelection = (cardId: number) => {
     setSelectedCollection(prev => {
       const newSelection = new Set(prev);
-      if (newSelection.has(cardId)) {
-        newSelection.delete(cardId);
-      } else {
-        newSelection.add(cardId);
-      }
+      newSelection.has(cardId) ? newSelection.delete(cardId) : newSelection.add(cardId);
       return newSelection;
     });
   };
 
   const handleFindBestDeck = () => {
-    // --- Yahaan par aapka AI/Backend Logic aayega ---
-    // Abhi ke liye, yeh user ke selection se 8 random cards chunega.
-    // Asli application mein, aap yahaan backend API ko call karenge.
     const userCollection = allCards.filter(card => selectedCollection.has(card.id));
     if (userCollection.length < 8) {
       alert("Please select at least 8 cards to build a deck.");
@@ -106,11 +105,7 @@ export default function HomePage() {
                     key={card.id} 
                     card={card} 
                     onCardClick={() => {
-                      if (deckBuilderMode) {
-                        handleCardSelection(card.id);
-                      } else {
-                        setSelectedCardForVideo(card);
-                      }
+                      deckBuilderMode ? handleCardSelection(card.id) : setSelectedCardForVideo(card);
                     }}
                     isSelected={selectedCollection.has(card.id)}
                     isDeckBuilderMode={deckBuilderMode}
@@ -130,7 +125,7 @@ export default function HomePage() {
 
 // --- Helper Components ---
 
-const DeckBuilderToggle = ({ deckBuilderMode, setDeckBuilderMode, onFindDeck, selectionCount }: any) => (
+const DeckBuilderToggle = ({ deckBuilderMode, setDeckBuilderMode, onFindDeck, selectionCount }: DeckBuilderToggleProps) => (
   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 p-4 bg-gray-900/50 rounded-lg mb-6 border border-gray-700">
     <div className="flex items-center gap-3">
       <span className={`font-semibold ${!deckBuilderMode ? 'text-yellow-300' : 'text-gray-400'}`}>Card Explorer</span>
@@ -158,6 +153,7 @@ const RecommendedDeckDisplay = ({ deck }: { deck: Card[] }) => (
     <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
       {deck.map(card => (
         <div key={card.id} className="relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={card.iconUrls.medium} alt={card.name} className="w-full h-auto rounded-md" />
         </div>
       ))}
@@ -166,33 +162,34 @@ const RecommendedDeckDisplay = ({ deck }: { deck: Card[] }) => (
 );
 
 const CardComponent = ({ card, onCardClick, isSelected, isDeckBuilderMode }: { card: Card; onCardClick: () => void; isSelected: boolean; isDeckBuilderMode: boolean; }) => {
-  const { elixirCost, iconUrls, name, rarity, hitpoints, damage } = card;
-  if (!iconUrls?.medium) return null;
-  const rarityClasses: {[key: string]: string} = {
-    'Common': 'border-gray-400 bg-gray-800/70', 'Rare': 'border-yellow-500 bg-yellow-900/40',
-    'Epic': 'border-purple-500 bg-purple-900/40', 'Legendary': 'border-sky-400 bg-sky-900/40',
-    'Champion': 'border-orange-400 bg-orange-900/40'
-  };
-  const rarityClass = rarityClasses[rarity] || 'border-gray-600';
-  const selectionClass = isDeckBuilderMode && isSelected ? 'ring-4 ring-offset-2 ring-offset-black ring-green-400 scale-105' : '';
+    const { elixirCost, iconUrls, name, rarity, hitpoints, damage } = card;
+    if (!iconUrls?.medium) return null;
+    const rarityClasses: {[key: string]: string} = {
+        'Common': 'border-gray-400 bg-gray-800/70', 'Rare': 'border-yellow-500 bg-yellow-900/40',
+        'Epic': 'border-purple-500 bg-purple-900/40', 'Legendary': 'border-sky-400 bg-sky-900/40',
+        'Champion': 'border-orange-400 bg-orange-900/40'
+    };
+    const rarityClass = rarityClasses[rarity] || 'border-gray-600';
+    const selectionClass = isDeckBuilderMode && isSelected ? 'ring-4 ring-offset-2 ring-offset-black ring-green-400 scale-105' : '';
 
-  return (
-    <div className={`p-1.5 border-2 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer flex flex-col justify-between ${rarityClass} ${selectionClass}`} onClick={onCardClick}>
-      <div>
-        <div className="relative">
-          <img src={iconUrls.medium} alt={name} className="w-full h-auto rounded-md" />
-          <div className="absolute -top-3 -left-3">
-            <ElixirDrop cost={elixirCost} />
-          </div>
+    return (
+        <div className={`p-1.5 border-2 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer flex flex-col justify-between ${rarityClass} ${selectionClass}`} onClick={onCardClick}>
+            <div>
+                <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={iconUrls.medium} alt={name} className="w-full h-auto rounded-md" />
+                    <div className="absolute -top-3 -left-3">
+                        <ElixirDrop cost={elixirCost} />
+                    </div>
+                </div>
+                <h3 className="text-center text-sm md:text-base font-semibold mt-2 truncate">{name}</h3>
+            </div>
+            <div className="text-xs text-center mt-2 space-y-1 text-gray-300">
+                {hitpoints && <p className="flex items-center justify-center gap-1">❤️ <span className="font-bold text-white">{hitpoints}</span></p>}
+                {damage && <p className="flex items-center justify-center gap-1">⚔️ <span className="font-bold text-white">{damage}</span></p>}
+            </div>
         </div>
-        <h3 className="text-center text-sm md:text-base font-semibold mt-2 truncate">{name}</h3>
-      </div>
-      <div className="text-xs text-center mt-2 space-y-1 text-gray-300">
-        {hitpoints && <p className="flex items-center justify-center gap-1">❤️ <span className="font-bold text-white">{hitpoints}</span></p>}
-        {damage && <p className="flex items-center justify-center gap-1">⚔️ <span className="font-bold text-white">{damage}</span></p>}
-      </div>
-    </div>
-  );
+    );
 };
 
 const ElixirDrop = ({ cost }: { cost: number }) => (
